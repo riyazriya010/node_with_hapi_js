@@ -49,6 +49,43 @@ const init = async () => {
     ]);
 
 
+    //Middlewares with life cycle hooks
+
+    // Pre-handler middleware to log request
+    server.ext('onRequest', (request, h) => {
+        console.log(`Request received for ${request.method.toUpperCase()} ${request.path}`);
+        return h.continue // Continue to the next lifecycle hook
+    })
+
+    // Simulating authentication middleware
+    // server.ext('onPreHandler', (request, h) => {
+    //     const authHeader = request.headers.authorization;
+
+    //     if (!authHeader || authHeader !== 'Bearer mysecretkey') {
+    //         return h.response('Unauthorized').code(401);
+    //     }
+
+    //     return h.continue;
+    // });
+
+
+    // Middleware to modify the response
+    // server.ext('onPreResponse', (request, h) => {
+    //     const response = request.response;
+
+    //     // Check if it's a valid response object
+    //     if (response.isBoom) {
+    //         // Modify error responses, if needed
+    //         response.output.payload.message = 'Custom error message!';
+    //     } else {
+    //         // Modify normal responses
+    //         response.header('X-Custom-Header', 'Hello from Middleware!');
+    //     }
+
+    //     return h.continue; // Proceed to send the response
+    // });
+
+
     //setting up view engine
     server.views({
         engines: {
@@ -62,8 +99,13 @@ const init = async () => {
         method: 'GET',
         path: '/{name?}',
         handler: (request, h) => {
-            const gestName = request.params.name || 'Geust'
-            return h.view('home', { title: gestName })
+            try {
+                const gestName = request.params.name || 'Guest';
+                return h.view('home', { title: gestName });
+            } catch (err) {
+                console.error('Error in handler:', err);
+                return h.response('Internal Server Error').code(500);
+            }
         }
     })
 
@@ -84,7 +126,7 @@ const init = async () => {
         }
     })
 
-     server.route({
+    server.route({
         method: "POST",
         path: "/addTask",
         handler: async (request, h) => {
